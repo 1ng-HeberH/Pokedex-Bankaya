@@ -1,40 +1,41 @@
 import React, {useState, useEffect} from 'react';
-import {Image, Pressable, Modal, StyleSheet, View, Text} from 'react-native';
+import {Image, Pressable, Modal, StyleSheet, View} from 'react-native';
 import Colors from '../style/Colors';
 import Title from '../components/Titles';
-import ScreenText from '../data/ScreensText';
 import PokeCard from '../components/PokeCard';
+import ModalButton from '../components/ModalButton';
+import ScreenText from '../data/DataScreensText';
+import PokeImage from '../data/DataPokeImage';
+import PokeTypes from '../data/DataPokeTypes';
+import PokeStats from '../data/DataPokeStats';
+import PokeAbilities from '../data/DataPokeAbilities';
 
-const ModalButton = ({text, onPress}) => {
-  return (
-    <Pressable style={styles.button} onPress={onPress}>
-      <Title titleType="bottonTitle" text={text}></Title>
-    </Pressable>
-  );
-};
-
-export default function PokeModal() {
+export default function PokeModal(props) {
   const [isPokeModalActive, setPokeModalActive] = useState(false);
-  const [isPokeDataVisible, setPokeDataVisible] = useState('ScreenDataPokeImage');
+  const [isPokeDataVisible, setPokeDataVisible] = useState('PokeImage');
+  const [data, setData] = useState([]);
+  const [dataSprites, setDataSprites] = useState([]);
+  const [dataTypes, setDataTypes] = useState([]);
+  const [dataStats, setDataStats] = useState([]);
+  var image = dataSprites.front_default;
 
-  const ScreenDataPokeImage = () => {
-    return <Text>Image</Text>;
-  };
-  const ScreenDataPokeData = () => {
-    return <Text>Data</Text>;
-  };
-  const ScreenDataPokeEvolutions = () => {
-    return <Text>Evolutions</Text>;
-  };
-  const ScreenDataPokeHabilities = () => {
-    return <Text>Habilities</Text>;
-  };
+  useEffect(() => {
+    fetch(props.pokeLink)
+      .then((response) => response.json())
+      .then((json) => {
+        setDataSprites(json.sprites),
+          setDataStats(json.stats),
+          setData(json.abilities),
+          setDataTypes(json.types);
+      })
+      .catch((error) => console.error(error));
+  }, []);
 
   return (
     <>
       <Modal
-        animationType="slide"
-        transparent={true}
+        animationType="fade"
+        transparent={false}
         visible={isPokeModalActive}
         onRequestClose={() => {
           setPokeModalActive(!isPokeModalActive);
@@ -44,44 +45,51 @@ export default function PokeModal() {
             <Title
               customStyle={styles.titleCard}
               titleType="cardTitle"
-              text="PokeName"
+              text={props.pokeName}
             />
             <Pressable
-              style={styles.closButtonContainer}
+              style={styles.closeButtonContainer}
               onPress={() => setPokeModalActive(!isPokeModalActive)}>
               <Image source={require('../images/closeIcon.png')} />
             </Pressable>
           </View>
-          <View style={styles.dataView}>
-            {isPokeDataVisible === 'ScreenDataPokeImage' &&
-              ScreenDataPokeImage()}
-            {isPokeDataVisible === 'ScreenDataPokeData' && ScreenDataPokeData()}
-            {isPokeDataVisible === 'ScreenDataPokeEvolutions' &&
-              ScreenDataPokeEvolutions()}
-            {isPokeDataVisible === 'ScreenDataPokeHabilities' &&
-              ScreenDataPokeHabilities()}
+          <View style={styles.dataScreen}>
+            {isPokeDataVisible === 'PokeImage' && <PokeImage value={image} />}
+            {isPokeDataVisible === 'PokeTypes' && (
+              <PokeTypes data={dataTypes} />
+            )}
+            {isPokeDataVisible === 'PokeStats' && (
+              <PokeStats data={dataStats} />
+            )}
+            {isPokeDataVisible === 'PokeAbilities' && (
+              <PokeAbilities data={data} />
+            )}
           </View>
-          <View style={styles.buttonContainer}>
+          <View style={styles.buttonsContainer}>
             <ModalButton
-              onPress={() => setPokeDataVisible('ScreenDataPokeImage')}
+              onPress={() => setPokeDataVisible('PokeImage')}
               text={ScreenText.modalTitleButtonImage}
             />
             <ModalButton
-              onPress={() => setPokeDataVisible('ScreenDataPokeEvolutions')}
-              text={ScreenText.modalTitleButtonEvolution}
+              onPress={() => setPokeDataVisible('PokeStats')}
+              text={ScreenText.modalTitleButtonStats}
             />
             <ModalButton
-              onPress={() => setPokeDataVisible('ScreenDataPokeData')}
-              text={ScreenText.modalTitleButtonData}
+              onPress={() => setPokeDataVisible('PokeTypes')}
+              text={ScreenText.modalTitleButtonTypes}
             />
             <ModalButton
-              onPress={() => setPokeDataVisible('ScreenDataPokeHabilities')}
+              onPress={() => setPokeDataVisible('PokeAbilities')}
               text={ScreenText.modalTitleButtonHabilities}
             />
           </View>
         </View>
       </Modal>
-      <PokeCard onPress={()=> setPokeModalActive(true)} />
+      <PokeCard
+        cardImage={image}
+        onPress={() => setPokeModalActive(true)}
+        pokeName={props.pokeName}
+      />
     </>
   );
 }
@@ -95,14 +103,14 @@ const styles = StyleSheet.create({
     marginHorizontal: 15,
     marginVertical: 20,
     padding: 10,
-    width: '95%',
+    width: '90%',
   },
   headerSection: {
     flexDirection: 'row',
     height: 50,
     justifyContent: 'center',
   },
-  closButtonContainer: {
+  closeButtonContainer: {
     end: 0,
     height: 40,
     position: 'absolute',
@@ -111,33 +119,24 @@ const styles = StyleSheet.create({
   titleCard: {
     color: Colors.LightGray,
   },
-  dataView: {
+  dataScreen: {
     alignSelf: 'center',
-    backgroundColor: Colors.LightGray,
+    backgroundColor: Colors.White,
     borderRadius: 10,
     height: 350,
-    padding: 25,
+    paddingVertical: 15,
+    paddingHorizontal: 25,
     marginVertical: 10,
     width: '95%',
   },
-  buttonContainer: {
+  buttonsContainer: {
     alignSelf: 'center',
     bottom: 0,
     flexDirection: 'row',
     flexWrap: 'wrap',
     height: 300,
-    padding: 10,
+    justifyContent: 'space-evenly',
+    paddingVertical: 10,
     position: 'absolute',
-    justifyContent: 'center',
-    width: '100%',
-  },
-  button: {
-    backgroundColor: Colors.Orange,
-    borderRadius: 5,
-    height: 100,
-    justifyContent: 'center',
-    marginVertical: 15,
-    marginHorizontal: 10,
-    width: 140,
   },
 });
